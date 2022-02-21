@@ -47,8 +47,12 @@ public class DefaultController implements TrafficShapingController {
 
     @Override
     public boolean canPass(Node node, int acquireCount, boolean prioritized) {
+        // 计算当前窗口计数之和
         int curCount = avgUsedTokens(node);
+        // 比较当前流量与规则限制
         if (curCount + acquireCount > count) {
+            // 即使超过限制, 如果 prioritized = true && grade == RuleConstant.FLOW_GRADE_QPS , 则认为是重要业务,
+            // 可以尝试让业务线程sleep到下一个窗口, 借用下一个窗口的计数
             if (prioritized && grade == RuleConstant.FLOW_GRADE_QPS) {
                 long currentTime;
                 long waitInMs;
