@@ -39,7 +39,7 @@ public class RateLimiterControllerTest {
 
         long start = TimeUtil.currentTimeMillis();
         for (int i = 0; i < 6; i++) {
-            assertTrue(paceController.canPass(node, 1));
+            assertTrue(paceController.canPass(node, 5));
         }
         long end = TimeUtil.currentTimeMillis();
         assertTrue((end - start) > 400);

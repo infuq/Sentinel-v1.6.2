@@ -40,8 +40,11 @@ import com.alibaba.csp.sentinel.util.TimeUtil;
  */
 public abstract class LeapArray<T> {
 
+    // 单个滑动窗口时间值
     protected int windowLengthInMs;
+    // 滑动窗口个数
     protected int sampleCount;
+    // 周期值  windowLengthInMs * sampleCount
     protected int intervalInMs;
 
     protected final AtomicReferenceArray<WindowWrap<T>> array;
@@ -163,7 +166,9 @@ public abstract class LeapArray<T> {
                  * that means the time is within the bucket, so directly return the bucket.
                  */
                 return old;
-            } else if (windowStart > old.windowStart()) {
+            }
+            // 窗口滑动的关键
+            else if (windowStart > old.windowStart()) {
                 /*
                  *   (old)
                  *             B0       B1      B2    NULL      B4

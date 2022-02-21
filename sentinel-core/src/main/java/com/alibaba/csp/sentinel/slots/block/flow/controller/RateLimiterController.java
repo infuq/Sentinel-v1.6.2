@@ -28,7 +28,7 @@ import com.alibaba.csp.sentinel.node.Node;
 public class RateLimiterController implements TrafficShapingController {
 
     private final int maxQueueingTimeMs;
-    private final double count;
+    private final double count; // 表示1秒允许通过count个请求, 则每个请求间隔 1/count (s) = 1/count * 1000 (ms)
 
     private final AtomicLong latestPassedTime = new AtomicLong(-1);
 
@@ -56,18 +56,28 @@ public class RateLimiterController implements TrafficShapingController {
 
         long currentTime = TimeUtil.currentTimeMillis();
         // Calculate the interval between every two requests.
+        // count: 表示1秒允许通过count个请求, 则每个请求间隔 1/count (s) = 1/count * 1000 (ms)
+        // 以下表达式含义: 需要acquireCount个令牌的间隔时间
         long costTime = Math.round(1.0 * (acquireCount) / count * 1000);
 
         // Expected pass time of this request.
+        //
         long expectedTime = costTime + latestPassedTime.get();
 
         if (expectedTime <= currentTime) {
-            // Contention may exist here, but it's okay.
+            // Contention may exist here, but it's okay. 翻译 这里可能存在争论,但没关系
             latestPassedTime.set(currentTime);
             return true;
         } else {
+            // |<------------------------- costTime --------------->|
+            // |                            |<----- waitTime ------>|
+            // |____________________________|_______________________|
+            // ^                            ^                       ^
+            // latestPassedTime             currentTime             expectedTime
+
             // Calculate the time to wait.
             long waitTime = costTime + latestPassedTime.get() - TimeUtil.currentTimeMillis();
+            // 需要等待的时间过长, 直接拒绝
             if (waitTime > maxQueueingTimeMs) {
                 return false;
             } else {
