@@ -54,6 +54,8 @@ public class RateLimiterController implements TrafficShapingController {
             return false;
         }
 
+
+
         long currentTime = TimeUtil.currentTimeMillis();
         // Calculate the interval between every two requests.
         // count: 表示1秒允许通过count个请求, 则每个请求间隔 1/count (s) = 1/count * 1000 (ms)
@@ -61,11 +63,16 @@ public class RateLimiterController implements TrafficShapingController {
         long costTime = Math.round(1.0 * (acquireCount) / count * 1000);
 
         // Expected pass time of this request.
-        //
-        long expectedTime = costTime + latestPassedTime.get();
+        // 满足`acquireCount个令牌`的时间点(expectedTime)
+        long expectedTime = costTime + latestPassedTime.get(); // 表示时间点
 
+
+
+        // 时间点小于当前时间, 表明系统比较空闲, 直接通过
         if (expectedTime <= currentTime) {
             // Contention may exist here, but it's okay. 翻译 这里可能存在争论,但没关系
+            // 个人理解 : 假如count = 10, 表明1秒允许通过10个请求, 此时(请求1,acquireCount=6)和(请求2,acquireCount=9),
+            // 两个请求同时执行67行代码, 在1秒的时间范围内, 两个请求都满足72行判断条件, 但实际通过了 6+9=15个请求
             latestPassedTime.set(currentTime);
             return true;
         } else {

@@ -32,7 +32,7 @@ public class DefaultController implements TrafficShapingController {
 
     private static final int DEFAULT_AVG_USED_TOKENS = 0;
 
-    private double count;
+    private double count; // 表示1秒允许通过count个请求
     private int grade;
 
     public DefaultController(double count, int grade) {
