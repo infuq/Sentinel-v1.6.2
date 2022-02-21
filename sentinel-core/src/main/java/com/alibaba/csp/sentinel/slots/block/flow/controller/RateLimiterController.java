@@ -83,20 +83,29 @@ public class RateLimiterController implements TrafficShapingController {
             // latestPassedTime             currentTime             expectedTime
 
             // Calculate the time to wait.
+            // 计算需要等待的时长
             long waitTime = costTime + latestPassedTime.get() - TimeUtil.currentTimeMillis();
             // 需要等待的时间过长, 直接拒绝
             if (waitTime > maxQueueingTimeMs) {
                 return false;
-            } else {
+            } else { // 即 waitTime < maxQueueingTimeMs
+
+                // 此处调用 addAndGet 方法返回的是最新的时间点, 名称叫做oldTime, 给人误解
+                // 这里的oldTime 即 expectedTime含义
                 long oldTime = latestPassedTime.addAndGet(costTime);
                 try {
                     waitTime = oldTime - TimeUtil.currentTimeMillis();
+
+                    // 91行表明 waitTime < maxQueueingTimeMs , 而经过95和97行运行之后, 存在 waitTime > maxQueueingTimeMs 的情况
+                    // 解释 : 122 - 142行
                     if (waitTime > maxQueueingTimeMs) {
+                        // 回滚更新
                         latestPassedTime.addAndGet(-costTime);
                         return false;
                     }
                     // in race condition waitTime may <= 0
                     if (waitTime > 0) {
+                        // 休眠之后, 直接通过
                         Thread.sleep(waitTime);
                     }
                     return true;
@@ -108,3 +117,43 @@ public class RateLimiterController implements TrafficShapingController {
     }
 
 }
+
+
+// 图1
+// |<-------------------- costTime -------------------->|
+// |                            |<------ waitTime ----->|                               waitTime < maxQueueingTimeMs
+// |____________________________|_______________________|
+// ^(A)                         ^(B)                    ^(C)
+// latestPassedTime             currentTime             expectedTime
+
+
+// 时间推移
+
+// 图2
+// |                <-------------------- costTime -------------------->|
+// |                |                   |<--------- waitTime ---------->|               waitTime > maxQueueingTimeMs
+// |________________|___________________|_______________________________|
+//                  ^(D)                ^(E)                            ^(F)
+//                  latestPassedTime   currentTime                      expectedTime
+
+
+// 在图1中, waitTime < maxQueueingTimeMs .
+// 随着时间推移, 存在竞争, latestPassedTime从A->D , currentTime从B->E ,  A->D的长度大于B->E的长度,
+// 进而导致了waitTime长度增长, 造成waitTime > maxQueueingTimeMs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
