@@ -98,13 +98,16 @@ public abstract class LeapArray<T> {
      */
     protected abstract WindowWrap<T> resetWindowTo(WindowWrap<T> windowWrap, long startTime);
 
+    // 计算 timeMillis 在array中的第几个窗口
     private int calculateTimeIdx(/*@Valid*/ long timeMillis) {
         long timeId = timeMillis / windowLengthInMs;
         // Calculate current index so we can map the timestamp to the leap array.
         return (int)(timeId % array.length());
     }
 
+    // 计算 timeMillis 在array中的窗口的起始值
     protected long calculateWindowStart(/*@Valid*/ long timeMillis) {
+        // 例如  302 - 302 % 100 = 302 - 2 = 300
         return timeMillis - timeMillis % windowLengthInMs;
     }
 
@@ -121,6 +124,7 @@ public abstract class LeapArray<T> {
 
         int idx = calculateTimeIdx(timeMillis);
         // Calculate current bucket start time.
+        // 计算 timeMillis 所在时间窗口的起始值
         long windowStart = calculateWindowStart(timeMillis);
 
         /*

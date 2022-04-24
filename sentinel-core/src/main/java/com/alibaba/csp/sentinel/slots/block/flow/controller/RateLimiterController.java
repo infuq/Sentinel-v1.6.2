@@ -70,7 +70,7 @@ public class RateLimiterController implements TrafficShapingController {
 
         // 时间点小于当前时间, 表明系统比较空闲, 直接通过
         if (expectedTime <= currentTime) {
-            // Contention may exist here, but it's okay. 翻译 这里可能存在争论,但没关系
+            // Contention may exist here, but it's okay. 翻译-> 这里可能存在争论,但没关系
             // 个人理解 : 假如count = 10, 表明1秒允许通过10个请求, 此时(请求1,acquireCount=6)和(请求2,acquireCount=9),
             // 两个请求同时执行67行代码, 在1秒的时间范围内, 两个请求都满足72行判断条件, 但实际通过了 6+9=15个请求
             latestPassedTime.set(currentTime);
